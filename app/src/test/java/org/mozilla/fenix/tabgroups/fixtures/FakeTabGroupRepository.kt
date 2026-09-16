@@ -2,23 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.fenix.tabgroups.fakes
+package org.mozilla.fenix.tabgroups.fixtures
 
-import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import org.mozilla.fenix.tabgroups.storage.data.TabGroup
-import org.mozilla.fenix.tabgroups.storage.data.TabGroupData
-import org.mozilla.fenix.tabgroups.storage.repository.TabGroupRepository
+import mozilla.components.feature.tabgroups.storage.data.TabGroup
+import mozilla.components.feature.tabgroups.storage.data.TabGroupData
+import mozilla.components.feature.tabgroups.storage.repository.TabGroupRepository
 
-/**
- * Important Note: This is used for TESTING and COMPOSE PREVIEWS only.
- *
- * This is a fake implementation of [TabGroupRepository] designed exclusively for unit tests and Compose previews. Do
- * NOT use this in production UI code.
- */
-@VisibleForTesting
-@Suppress("EmptyFunctionBlock")
+/** A fake implementation of [TabGroupRepository] designed exclusively for unit tests. */
 class FakeTabGroupRepository(
     initialTabGroupData: TabGroupData = TabGroupData(),
     private val closeAllTabGroups: () -> Unit = {},
@@ -26,50 +18,46 @@ class FakeTabGroupRepository(
     private val deleteTabGroupAssignmentsById: (List<String>) -> Unit = {},
 ) : TabGroupRepository {
 
-    private val mutableTabGroupFlow: MutableStateFlow<TabGroupData> = MutableStateFlow(initialTabGroupData)
-
     override val tabGroupDataFlow: Flow<TabGroupData>
-        get() = mutableTabGroupFlow
+        field: MutableStateFlow<TabGroupData> = MutableStateFlow(initialTabGroupData)
 
     override suspend fun createTabGroupWithTabs(
         tabGroup: TabGroup,
         tabIds: List<String>,
     ) {
-        val updatedAssignments = HashMap(mutableTabGroupFlow.value.tabGroupAssignments)
+        val updatedAssignments = HashMap(tabGroupDataFlow.value.tabGroupAssignments)
         tabIds.forEach { id ->
             updatedAssignments[id] = tabGroup.id
         }
-        mutableTabGroupFlow.emit(
-            mutableTabGroupFlow.value.copy(
-                tabGroups = mutableTabGroupFlow.value.tabGroups + tabGroup,
+        tabGroupDataFlow.emit(
+            tabGroupDataFlow.value.copy(
+                tabGroups = tabGroupDataFlow.value.tabGroups + tabGroup,
                 tabGroupAssignments = updatedAssignments,
             )
         )
     }
 
     override suspend fun addNewTabGroup(tabGroup: TabGroup) {
-        mutableTabGroupFlow.emit(
-            mutableTabGroupFlow.value.copy(tabGroups = mutableTabGroupFlow.value.tabGroups + tabGroup)
-        )
+        tabGroupDataFlow.emit(tabGroupDataFlow.value.copy(tabGroups = tabGroupDataFlow.value.tabGroups + tabGroup))
     }
 
     override suspend fun updateTabGroup(tabGroup: TabGroup) {
         val updatedList =
-            mutableTabGroupFlow.value.tabGroups.map {
+            tabGroupDataFlow.value.tabGroups.map {
                 if (it.id == tabGroup.id) {
                     tabGroup
                 } else {
                     it
                 }
             }
-        mutableTabGroupFlow.emit(mutableTabGroupFlow.value.copy(tabGroups = updatedList))
+        tabGroupDataFlow.emit(tabGroupDataFlow.value.copy(tabGroups = updatedList))
     }
 
     override suspend fun closeTabGroup(tabGroupId: String) {
-        mutableTabGroupFlow.emit(
-            mutableTabGroupFlow.value.copy(
+        tabGroupDataFlow.emit(
+            tabGroupDataFlow.value.copy(
                 tabGroups =
-                    mutableTabGroupFlow.value.tabGroups.map { group ->
+                    tabGroupDataFlow.value.tabGroups.map { group ->
                         if (group.id == tabGroupId) {
                             group.copy(closed = true)
                         } else {
@@ -81,10 +69,10 @@ class FakeTabGroupRepository(
     }
 
     override suspend fun openTabGroup(tabGroupId: String) {
-        mutableTabGroupFlow.emit(
-            mutableTabGroupFlow.value.copy(
+        tabGroupDataFlow.emit(
+            tabGroupDataFlow.value.copy(
                 tabGroups =
-                    mutableTabGroupFlow.value.tabGroups.map { group ->
+                    tabGroupDataFlow.value.tabGroups.map { group ->
                         if (group.id == tabGroupId) {
                             group.copy(closed = false)
                         } else {
@@ -104,23 +92,23 @@ class FakeTabGroupRepository(
     }
 
     override suspend fun deleteTabGroupsById(ids: List<String>) {
-        val prunedAssignments = HashMap(mutableTabGroupFlow.value.tabGroupAssignments)
+        val prunedAssignments = HashMap(tabGroupDataFlow.value.tabGroupAssignments)
         ids.forEach {
             prunedAssignments.remove(it)
         }
-        mutableTabGroupFlow.emit(
-            mutableTabGroupFlow.value.copy(
-                tabGroups = mutableTabGroupFlow.value.tabGroups.filterNot { it.id in ids },
+        tabGroupDataFlow.emit(
+            tabGroupDataFlow.value.copy(
+                tabGroups = tabGroupDataFlow.value.tabGroups.filterNot { it.id in ids },
                 tabGroupAssignments = prunedAssignments,
             )
         )
     }
 
     override suspend fun ungroupTabGroup(tabGroupId: String) {
-        mutableTabGroupFlow.emit(
-            mutableTabGroupFlow.value.copy(
-                tabGroups = mutableTabGroupFlow.value.tabGroups.filterNot { it.id == tabGroupId },
-                tabGroupAssignments = mutableTabGroupFlow.value.tabGroupAssignments.filterValues { it != tabGroupId },
+        tabGroupDataFlow.emit(
+            tabGroupDataFlow.value.copy(
+                tabGroups = tabGroupDataFlow.value.tabGroups.filterNot { it.id == tabGroupId },
+                tabGroupAssignments = tabGroupDataFlow.value.tabGroupAssignments.filterValues { it != tabGroupId },
             )
         )
     }
@@ -129,28 +117,28 @@ class FakeTabGroupRepository(
         tabId: String,
         tabGroupId: String,
     ) {
-        val updatedAssignments = mutableTabGroupFlow.value.tabGroupAssignments + (tabId to tabGroupId)
-        mutableTabGroupFlow.emit(mutableTabGroupFlow.value.copy(tabGroupAssignments = updatedAssignments))
+        val updatedAssignments = tabGroupDataFlow.value.tabGroupAssignments + (tabId to tabGroupId)
+        tabGroupDataFlow.emit(tabGroupDataFlow.value.copy(tabGroupAssignments = updatedAssignments))
     }
 
     override suspend fun addTabsToTabGroup(
         tabGroupId: String,
         tabIds: List<String>,
     ) {
-        val updatedAssignments = HashMap(mutableTabGroupFlow.value.tabGroupAssignments)
+        val updatedAssignments = HashMap(tabGroupDataFlow.value.tabGroupAssignments)
         tabIds.forEach { id ->
             updatedAssignments[id] = tabGroupId
         }
-        mutableTabGroupFlow.emit(mutableTabGroupFlow.value.copy(tabGroupAssignments = updatedAssignments))
+        tabGroupDataFlow.emit(tabGroupDataFlow.value.copy(tabGroupAssignments = updatedAssignments))
     }
 
     override suspend fun updateTabGroupAssignment(
         tabId: String,
         tabGroupId: String,
     ) {
-        val updatedAssignments = HashMap(mutableTabGroupFlow.value.tabGroupAssignments)
+        val updatedAssignments = HashMap(tabGroupDataFlow.value.tabGroupAssignments)
         updatedAssignments[tabId] = tabGroupId
-        mutableTabGroupFlow.emit(mutableTabGroupFlow.value.copy(tabGroupAssignments = updatedAssignments))
+        tabGroupDataFlow.emit(tabGroupDataFlow.value.copy(tabGroupAssignments = updatedAssignments))
     }
 
     override suspend fun deleteTabGroupAssignmentById(tabId: String) {
@@ -164,6 +152,6 @@ class FakeTabGroupRepository(
     override suspend fun deleteAllTabGroupAssignmentsForGroup(tabGroupId: String) {}
 
     override suspend fun deleteAllTabGroupData() {
-        mutableTabGroupFlow.emit(TabGroupData())
+        tabGroupDataFlow.emit(TabGroupData())
     }
 }

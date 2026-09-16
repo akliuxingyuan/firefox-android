@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.fenix.tabgroups.storage.redux.middleware
+package org.mozilla.fenix.tabgroups.middleware
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -10,9 +10,9 @@ import kotlinx.coroutines.launch
 import mozilla.components.browser.state.action.BrowserAction
 import mozilla.components.browser.state.action.TabListAction
 import mozilla.components.browser.state.state.BrowserState
+import mozilla.components.feature.tabgroups.storage.repository.TabGroupRepository
 import mozilla.components.lib.state.Middleware
 import mozilla.components.lib.state.Store
-import org.mozilla.fenix.tabgroups.storage.repository.TabGroupRepository
 
 /**
  * Processes [TabListAction]s to keep [TabGroupRepository] synced with [BrowserState].
